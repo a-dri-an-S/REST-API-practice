@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 
 require('dotenv').config();
 
@@ -12,6 +14,14 @@ const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        allowedHeaders: ['Content-Type', 'Authorization']
+    }
+});
 
 const fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -58,10 +68,9 @@ app.use((error, req, res, next) => {
 
 mongoose.connect(process.env.DB_CONNECT)
     .then(result => {
-        const server = app.listen(8080);
-        const io = require('socket.io')(server);
         io.on('connection', socket => {
-            console.log('Client Connected!')
+            console.log('Connected to server!')
         })
+        httpServer.listen(8080);
     })
     .catch(err => console.log(err));
