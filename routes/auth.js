@@ -15,6 +15,7 @@ router.put('/signup', [
                 .then(userDoc => {
                     if (userDoc) {
                         return Promise.reject('Email address already exists!')
+                            // .catch(err => console.log(err));
                     }
                 })
         })
