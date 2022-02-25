@@ -7,9 +7,8 @@ const authController = require('../controllers/auth');
 const router = express.Router();
 
 router.put('/signup', [
-    body('email')
+    body('email', 'Please enter a valid email!')
         .isEmail()
-        .withMessage('Please enter a valid email!')
         .custom((value, { req }) => {
             return User.findOne({ email: value })
                 .then(userDoc => {
@@ -19,10 +18,10 @@ router.put('/signup', [
                 })
         })
         .normalizeEmail(),
-    body('password')
+    body('password', 'Password must be 5 characters minimum.')
         .trim()
         .isLength({ min: 5 }),
-    body('name')
+    body('name', 'Please enter a name.')
         .trim()
         .not()
         .isEmpty()
