@@ -12,6 +12,7 @@ exports.getPosts = async (req, res, next) => {
     try {
         const totalItems = await Post.find().countDocuments();
         const posts = await Post.find()
+            .populate('creator')
             .skip((currentPage - 1) * perPage)
             .limit(perPage);
 
@@ -123,10 +124,10 @@ exports.updatePost = async (req, res, next) => {
         post.title = title;
         post.imageUrl = imageUrl;
         post.content = content;
-        await post.save();
+        const result = await post.save();
         res.status(200).json({
             message: 'Post updated!',
-            post: post
+            post: result
         })
     } catch (err) {
         if (!err.statusCode) {
