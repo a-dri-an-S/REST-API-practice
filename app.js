@@ -1,7 +1,4 @@
 const path = require('path');
-const fs = require('fs');
-
-// const cors = require('cors');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -13,6 +10,7 @@ const { graphqlHTTP } = require('express-graphql');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const auth = require('./middleware/auth');
+const { clearImage } = require('./util/file'); 
 
 require('dotenv').config();
 
@@ -43,7 +41,6 @@ app.use(bodyParser.json());
 app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// app.use(cors());
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE');
@@ -101,8 +98,3 @@ mongoose.connect(process.env.DB_CONNECT)
         });
     })
     .catch(err => console.log(err));
-
-const clearImage = filePath => {
-    filePath = path.join(__dirname, '..', filePath);
-    fs.unlink(filePath, err => console.log(err));
-}
