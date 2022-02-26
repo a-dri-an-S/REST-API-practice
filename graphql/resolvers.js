@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/user');
 const Post = require('../models/post');
+const { findById } = require('../models/user');
 
 module.exports = {
     createUser: async function ({ userInput }, req) {
@@ -63,10 +64,10 @@ module.exports = {
             throw error;
         }
         const errors = [];
-        if (validator.isEmpty(postInput.title) || validator.isLength(postInput.title, { max: 5 })) {
+        if (validator.isEmpty(postInput.title) || !validator.isLength(postInput.title, { min: 5 })) {
             errors.push({ message: 'Title is invalid!' })
         }
-        if (validator.isEmpty(postInput.content) || validator.isLength(postInput.content, { max: 5 })) {
+        if (validator.isEmpty(postInput.content) || !validator.isLength(postInput.content, { min: 5 })) {
             errors.push({ message: 'Content is invalid!' })
         }
         if (errors.length > 0) {
@@ -78,14 +79,13 @@ module.exports = {
         const user = await User.findById(req.userId);
         if (!user) {
             const error = new Error('Invalid user.');
-            error.data = errors;
-            error.code = 422;
+            error.code = 401;
             throw error;
         }
         const post = new Post({
             title: postInput.title,
             content: postInput.content,
-            imageUlr: postInput.imageUrl,
+            imageUrl: postInput.imageUrl,
             creator: user
         });
         const createdPost = await post.save();
@@ -115,13 +115,34 @@ module.exports = {
             .skip((page - 1) * perPage)
             .limit(perPage)
             .populate('creator');
-            return { posts: posts.map( p=> {
+        return {
+            posts: posts.map(p => {
                 return {
                     ...p._doc,
-            _id: p._id.toString(),
-            createdAt: p.createdAt.toISOString(),
-            updatedAt: p.updatedAt.toISOString()
+                    _id: p._id.toString(),
+                    createdAt: p.createdAt.toISOString(),
+                    updatedAt: p.updatedAt.toISOString()
                 }
-            }), totalPosts: totalPosts }
+            }), totalPosts: totalPosts
+        }
+    },
+    post: async function ({ id }, req) {
+        if (!req.isAuth) {
+            const error = new Error('Not authenticated!');
+            error.code = 401;
+            throw error;
+        }
+        const post = await Post.findById(id).populate('creator');
+        if (!post) {
+            const error = new Error('No post found!');
+            error.code = 404;
+            throw error;
+        }
+        return {
+            ...post._doc,
+            _id: post._id.toString(),
+            createdAt: post.createdAt.toISOString(),
+            updatedAt: post.updatedAt.toISOString()
+        }
     }
 };
